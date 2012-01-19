@@ -245,7 +245,9 @@ child_spec() = {Id,StartFunc,Restart,Shutdown,Type,Modules}
   <funcs>
     <func>
       <name name="start_link" arity="2"/>
-      <name name="start_link" arity="3"/>
+      <name name="start_link" arity="3" clause_i="1"/>
+      <name name="start_link" arity="3" clause_i="2"/>
+      <name name="start_link" arity="4"/>
       <fsummary>Create a supervisor process.</fsummary>
       <type name="startlink_ret"/>
       <type name="startlink_err"/>
@@ -263,12 +265,15 @@ child_spec() = {Id,StartFunc,Restart,Shutdown,Type,Modules}
           have been started.</p>
         <p>If <c><anno>SupName</anno>={local,Name}</c> the supervisor is registered
           locally as <c>Name</c> using <c>register/2</c>. If
-          <c><anno>SupName</anno>={global,Name}</c> the supervisor is registered
-          globally as <c>Name</c> using <c>global:register_name/2</c>.
+          <c><anno>SupName</anno>={global,GlobalName}</c> the supervisor is registered
+          globally as <c>GlobalName</c> using <c>global:register_name/2,3</c>.
           If no name is provided, the supervisor is not registered.</p>
         <p><c><anno>Module</anno></c> is the name of the callback module.</p>
         <p><c><anno>Args</anno></c> is an arbitrary term which is passed as
           the argument to <c><anno>Module</anno>:init/1</c>.</p>
+        <p><c><anno>Options</anno></c> is a list of options. See
+          <seealso marker="gen_server#start_link/3">gen_server(3)</seealso>
+          for available options.</p>
         <p>If the supervisor and its child processes are successfully
           created (i.e. if all child process start functions return
           <c>{ok,Child}</c>, <c>{ok,Child,Info}</c>, or <c>ignore</c>)

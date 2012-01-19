@@ -21,7 +21,7 @@
 -behaviour(gen_server).
 
 %% External exports
--export([start_link/2, start_link/3,
+-export([start_link/2, start_link/3, start_link/4,
 	 start_child/2, restart_child/2,
 	 delete_child/2, terminate_child/2,
 	 which_children/1, count_children/1,
@@ -44,10 +44,10 @@
 -type restart()  :: 'permanent' | 'transient' | 'temporary'.
 -type shutdown() :: 'brutal_kill' | timeout().
 -type worker()   :: 'worker' | 'supervisor'.
--type sup_name() :: {'local', Name :: atom()} | {'global', Name :: atom()}.
+-type sup_name() :: {'local', Name :: atom()} | {'global', GlobalName :: term()}.
 -type sup_ref()  :: (Name :: atom())
                   | {Name :: atom(), Node :: node()}
-                  | {'global', Name :: atom()}
+                  | {'global', GlobalName :: term()}
                   | pid().
 -type child_spec() :: {Id :: child_id(),
                        StartFunc :: mfargs(),
@@ -98,7 +98,7 @@
 %%% ---------------------------------------------------
 %%% This is a general process supervisor built upon gen_server.erl.
 %%% Servers/processes should/could also be built using gen_server.erl.
-%%% SupName = {local, atom()} | {global, atom()}.
+%%% SupName = {local, atom()} | {global, term()}.
 %%% ---------------------------------------------------
 
 -type startlink_err() :: {'already_started', pid()} | 'shutdown' | term().
@@ -113,9 +113,25 @@ start_link(Mod, Args) ->
 -spec start_link(SupName, Module, Args) -> startlink_ret() when
       SupName :: sup_name(),
       Module :: module(),
-      Args :: term().
-start_link(SupName, Mod, Args) ->
-    gen_server:start_link(SupName, supervisor, {SupName, Mod, Args}, []).
+      Args :: term();
+                (Module, Args, Options) -> startlink_ret() when
+      Module :: module(),
+      Args :: term(),
+      Options :: [tuple()].
+start_link({local,_}=SupName, Mod, Args) ->
+    gen_server:start_link(SupName, supervisor, {SupName, Mod, Args}, []);
+start_link({global,_}=SupName, Mod, Args) ->
+    gen_server:start_link(SupName, supervisor, {SupName, Mod, Args}, []);
+start_link(Mod, Args, Options) ->
+    gen_server:start_link(supervisor, {self, Mod, Args}, Options).
+
+-spec start_link(SupName, Module, Args, Options) -> startlink_ret() when
+      SupName :: sup_name(),
+      Module :: module(),
+      Args :: term(),
+      Options :: [tuple()].
+start_link(SupName, Mod, Args, Options) ->
+    gen_server:start_link(SupName, supervisor, {self, Mod, Args}, Options).
  
 %%% ---------------------------------------------------
 %%% Interface functions.
@@ -259,7 +275,7 @@ init_dynamic(_State, StartSpec) ->
 %%-----------------------------------------------------------------
 %% Func: start_children/2
 %% Args: Children = [child_rec()] in start order
-%%       SupName = {local, atom()} | {global, atom()} | {pid(), Mod}
+%%       SupName = {local, atom()} | {global, term()} | {pid(), Mod}
 %% Purpose: Start all children.  The new list contains #child's 
 %%          with pids.
 %% Returns: {ok, NChildren} | {error, NChildren}
@@ -734,7 +750,7 @@ restart(one_for_all, Child, State) ->
 %%-----------------------------------------------------------------
 %% Func: terminate_children/2
 %% Args: Children = [child_rec()] in termination order
-%%       SupName = {local, atom()} | {global, atom()} | {pid(),Mod}
+%%       SupName = {local, atom()} | {global, term()} | {pid(),Mod}
 %% Returns: NChildren = [child_rec()] in
 %%          startup order (reversed termination order)
 %%-----------------------------------------------------------------
@@ -843,7 +859,7 @@ monitor_child(Pid) ->
 %% Func: terminate_dynamic_children/3
 %% Args: Child    = child_rec()
 %%       Dynamics = ?DICT() | ?SET()
-%%       SupName  = {local, atom()} | {global, atom()} | {pid(),Mod}
+%%       SupName  = {local, atom()} | {global, term()} | {pid(),Mod}
 %% Returns: ok
 %%
 %%
@@ -1053,7 +1069,7 @@ remove_child(Child, State) ->
 
 %%-----------------------------------------------------------------
 %% Func: init_state/4
-%% Args: SupName = {local, atom()} | {global, atom()} | self
+%% Args: SupName = {local, atom()} | {global, term()} | self
 %%       Type = {Strategy, MaxIntensity, Period}
 %%         Strategy = one_for_one | one_for_all | simple_one_for_one |
 %%                    rest_for_one 
