@@ -31,7 +31,9 @@
 %%% Modified by Martin - uses proc_lib, sys and gen!
 
 
--export([start/0, start/1, start_link/0, start_link/1, stop/1, notify/2, 
+-export([start/0, start/1, start/2,
+         start_link/0, start_link/1, start_link/2,
+         stop/1, notify/2,
 	 sync_notify/2,
 	 add_handler/3, add_sup_handler/3, delete_handler/3, swap_handler/3,
 	 swap_sup_handler/3, which_handlers/1, call/3, call/4, wake_hib/4]).
@@ -107,8 +109,8 @@
 -type add_handler_ret()  :: ok | term() | {'EXIT',term()}.
 -type del_handler_ret()  :: ok | term() | {'EXIT',term()}.
 
--type emgr_name() :: {'local', atom()} | {'global', atom()}.
--type emgr_ref()  :: atom() | {atom(), atom()} |  {'global', atom()} | pid().
+-type emgr_name() :: {'local', atom()} | {'global', term()}.
+-type emgr_ref()  :: atom() | {atom(), atom()} |  {'global', term()} | pid().
 -type start_ret() :: {'ok', pid()} | {'error', term()}.
 
 %%---------------------------------------------------------------------------
@@ -119,17 +121,33 @@
 start() ->
     gen:start(?MODULE, nolink, ?NO_CALLBACK, [], []).
 
--spec start(emgr_name()) -> start_ret().
-start(Name) ->
-    gen:start(?MODULE, nolink, Name, ?NO_CALLBACK, [], []).
+-spec start(emgr_name() | [tuple()]) -> start_ret().
+start({local,_}=LN) ->
+    gen:start(?MODULE, nolink, LN, ?NO_CALLBACK, [], []);
+start({global,_}=GN) ->
+    gen:start(?MODULE, nolink, GN, ?NO_CALLBACK, [], []);
+start(Options) ->
+    gen:start(?MODULE, nolink, ?NO_CALLBACK, [], Options).
+
+-spec start(emgr_name(), [tuple()]) -> start_ret().
+start(Name, Options) ->
+    gen:start(?MODULE, nolink, Name, ?NO_CALLBACK, [], Options).
 
 -spec start_link() -> start_ret().
 start_link() ->
     gen:start(?MODULE, link, ?NO_CALLBACK, [], []).
 
--spec start_link(emgr_name()) -> start_ret().
-start_link(Name) ->
-    gen:start(?MODULE, link, Name, ?NO_CALLBACK, [], []).
+-spec start_link(emgr_name() | [tuple()]) -> start_ret().
+start_link({local,_}=LN) ->
+    gen:start(?MODULE, link, LN, ?NO_CALLBACK, [], []);
+start_link({global,_}=GN) ->
+    gen:start(?MODULE, link, GN, ?NO_CALLBACK, [], []);
+start_link(Options) ->
+    gen:start(?MODULE, link, ?NO_CALLBACK, [], Options).
+
+-spec start_link(emgr_name(), [tuple()]) -> start_ret().
+start_link(Name, Options) ->
+    gen:start(?MODULE, link, Name, ?NO_CALLBACK, [], Options).
 
 %% -spec init_it(pid(), 'self' | pid(), emgr_name(), module(), [term()], [_]) -> 
 init_it(Starter, self, Name, Mod, Args, Options) ->

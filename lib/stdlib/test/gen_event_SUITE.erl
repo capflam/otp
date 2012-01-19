@@ -70,20 +70,38 @@ start(Config) when is_list(Config) ->
     ?line [] = gen_event:which_handlers(Pid1),
     ?line ok = gen_event:stop(Pid1),
 
-    ?line {ok, Pid2} = gen_event:start({local, my_dummy_name}),
-    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line {ok, Pid2} = gen_event:start([]), %anonymous with options
     ?line [] = gen_event:which_handlers(Pid2),
-    ?line ok = gen_event:stop(my_dummy_name),
+    ?line ok = gen_event:stop(Pid2),
 
-    ?line {ok, Pid3} = gen_event:start_link({local, my_dummy_name}),
-    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line {ok, Pid3} = gen_event:start_link([]), %anonymous with options
     ?line [] = gen_event:which_handlers(Pid3),
+    ?line ok = gen_event:stop(Pid3),
+
+    ?line {ok, Pid4} = gen_event:start({local, my_dummy_name}),
+    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line [] = gen_event:which_handlers(Pid4),
     ?line ok = gen_event:stop(my_dummy_name),
 
-    ?line {ok, Pid4} = gen_event:start_link({global, my_dummy_name}),
+    ?line {ok, Pid5} = gen_event:start_link({local, my_dummy_name}),
+    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line [] = gen_event:which_handlers(Pid5),
+    ?line ok = gen_event:stop(my_dummy_name),
+
+    ?line {ok, Pid6} = gen_event:start_link({global, my_dummy_name}),
     ?line [] = gen_event:which_handlers({global, my_dummy_name}),
-    ?line [] = gen_event:which_handlers(Pid4),
+    ?line [] = gen_event:which_handlers(Pid6),
     ?line ok = gen_event:stop({global, my_dummy_name}),
+
+    ?line {ok, Pid7} = gen_event:start({local, my_dummy_name}, []),
+    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line [] = gen_event:which_handlers(Pid7),
+    ?line ok = gen_event:stop(my_dummy_name),
+
+    ?line {ok, Pid8} = gen_event:start_link({local, my_dummy_name}, []),
+    ?line [] = gen_event:which_handlers(my_dummy_name),
+    ?line [] = gen_event:which_handlers(Pid8),
+    ?line ok = gen_event:stop(my_dummy_name),
 
     ?line {ok, _} = gen_event:start_link({local, my_dummy_name}),
     ?line {error, {already_started, _}} =
@@ -92,15 +110,15 @@ start(Config) when is_list(Config) ->
 	gen_event:start({local, my_dummy_name}),
     ?line ok = gen_event:stop(my_dummy_name),
 
-    ?line {ok, Pid5} = gen_event:start_link({global, my_dummy_name}),
+    ?line {ok, Pid9} = gen_event:start_link({global, my_dummy_name}),
     ?line {error, {already_started, _}} =
 	gen_event:start_link({global, my_dummy_name}),
     ?line {error, {already_started, _}} =
 	gen_event:start({global, my_dummy_name}),
 
-    exit(Pid5, shutdown),
+    exit(Pid9, shutdown),
     receive
-	{'EXIT', Pid5, shutdown} -> ok
+	{'EXIT', Pid9, shutdown} -> ok
     after 10000 ->
 	    ?t:fail(exit_gen_event)
     end,
