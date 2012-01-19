@@ -44,7 +44,8 @@
                     | {'logfile', string()}.
 -type option()     :: {'timeout', timeout()}
 		    | {'debug', [debug_flag()]}
-		    | {'spawn_opt', [proc_lib:spawn_option()]}.
+		    | {'spawn_opt', [proc_lib:spawn_option()]}
+                    | {'global_resolver', function()}.
 -type options()    :: [option()].
 
 %%-----------------------------------------------------------------
@@ -55,7 +56,8 @@
 %%    LinkP = link | nolink
 %%    Name = {local, atom()} | {global, term()}
 %%    Args = term(), init arguments (to Mod:init/1)
-%%    Options = [{timeout, Timeout} | {debug, [Flag]} | {spawn_opt, OptionList}]
+%%    Options = [{timeout, Timeout} | {debug, [Flag]} |
+%%               {spawn_opt, OptionList} | {global_resolver, Method}]
 %%      Flag = trace | log | {logfile, File} | statistics | debug
 %%          (debug == log && statistics)
 %% Returns: {ok, Pid} | ignore |{error, Reason} |
@@ -120,7 +122,7 @@ init_it(GenMod, Starter, Parent, Mod, Args, Options) ->
     init_it2(GenMod, Starter, Parent, self(), Mod, Args, Options).
 
 init_it(GenMod, Starter, Parent, Name, Mod, Args, Options) ->
-    case name_register(Name) of
+    case name_register(Name, Options) of
 	true ->
 	    init_it2(GenMod, Starter, Parent, Name, Mod, Args, Options);
 	{false, Pid} ->
@@ -276,15 +278,19 @@ reply({To, Tag}, Reply) ->
 where({global, Name}) -> global:whereis_name(Name);
 where({local, Name})  -> whereis(Name).
 
-name_register({local, Name} = LN) ->
+name_register({local, Name} = LN, _) ->
     try register(Name, self()) of
 	true -> true
     catch
 	error:_ ->
 	    {false, where(LN)}
     end;
-name_register({global, Name} = GN) ->
-    case global:register_name(Name, self()) of
+name_register({global, Name} = GN, Options) ->
+    Res = case global_resolver(Options) of
+              undefined -> global:register_name(Name, self());
+              Method -> global:register_name(Name, self(), Method)
+          end,
+    case Res of
 	yes -> true;
 	no -> {false, where(GN)}
     end.
@@ -303,6 +309,14 @@ spawn_opts(Options) ->
 	    Opts;
 	_ ->
 	    []
+    end.
+
+global_resolver(Options) ->
+    case opt(global_resolver, Options) of
+	{ok, Method} ->
+	    Method;
+	_ ->
+	    undefined
     end.
 
 opt(Op, [{Op, Value}|_]) ->

@@ -90,7 +90,7 @@ gen_fsm:sync_send_all_state_event -----> Module:handle_sync_event/4
         <v>Module = atom()</v>
         <v>Args = term()</v>
         <v>Options = [Option]</v>
-        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts}</v>
+        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts} | {global_resolver,Method}</v>
         <v>&nbsp;&nbsp;Dbgs = [Dbg]</v>
         <v>&nbsp;&nbsp;&nbsp;Dbg = trace | log | statistics</v>
         <v>&nbsp;&nbsp;&nbsp;&nbsp;| {log_to_file,FileName} | {install,{Func,FuncState}}</v>
@@ -122,6 +122,11 @@ gen_fsm:sync_send_all_state_event -----> Module:handle_sync_event/4
           is allowed to spend <c>Time</c> milliseconds initializing
           or it will be terminated and the start function will return
           <c>{error,timeout}</c>.</p>
+        <p>If the option <c>{global_resolver,Method}</c> is present,
+          and if <c>ServerName={global,GlobalName}</c>, the gen_fsm will
+          be registered globally using <c>global:register_name/3</c>, with
+          <c>Method</c> as third argument. See
+          <seealso marker="kernel:global#register_name/3">global(3)</seealso>.</p>
         <p>If the option <c>{debug,Dbgs}</c> is present,
           the corresponding <c>sys</c> function will be called for each
           item in <c>Dbgs</c>. See
@@ -160,7 +165,7 @@ gen_fsm:sync_send_all_state_event -----> Module:handle_sync_event/4
         <v>Module = atom()</v>
         <v>Args = term()</v>
         <v>Options = [Option]</v>
-        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts}</v>
+        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts} | {global_resolver,Method}</v>
         <v>&nbsp;&nbsp;Dbgs = [Dbg]</v>
         <v>&nbsp;&nbsp;&nbsp;Dbg = trace | log | statistics</v>
         <v>&nbsp;&nbsp;&nbsp;&nbsp;| {log_to_file,FileName} | {install,{Func,FuncState}}</v>

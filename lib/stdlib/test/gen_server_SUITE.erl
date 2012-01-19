@@ -32,7 +32,8 @@
 	 spec_init_local_registered_parent/1, 
 	 spec_init_global_registered_parent/1,
 	 otp_5854/1, hibernate/1, otp_7669/1, call_format_status/1,
-	 error_format_status/1, call_with_huge_message_queue/1
+	 error_format_status/1, call_with_huge_message_queue/1,
+         global_resolver/1
 	]).
 
 % spawn export
@@ -56,7 +57,7 @@ all() ->
      spec_init_local_registered_parent,
      spec_init_global_registered_parent, otp_5854, hibernate,
      otp_7669, call_format_status, error_format_status,
-     call_with_huge_message_queue].
+     call_with_huge_message_queue, global_resolver].
 
 groups() -> 
     [].
@@ -82,7 +83,11 @@ init_per_testcase(Case, Config) when Case == call_remote1;
 				     Case == call_remote_n1;
 				     Case == call_remote_n2;
 				     Case == call_remote_n3 ->
-    {ok,N} = start_node(hubba),
+    {ok,N} = start_node(hubba, slave),
+    ?line Dog = ?t:timetrap(?default_timeout),
+    [{node,N},{watchdog, Dog} | Config];
+init_per_testcase(Case, Config) when Case == global_resolver ->
+    {ok,N} = start_node(hubba, peer),
     ?line Dog = ?t:timetrap(?default_timeout),
     [{node,N},{watchdog, Dog} | Config];
 init_per_testcase(_Case, Config) ->
@@ -316,9 +321,9 @@ call(Config) when is_list(Config) ->
 %% Test call to nonexisting processes on remote nodes
 %% --------------------------------------
 
-start_node(Name) ->
+start_node(Name, Type) ->
     ?line Pa = filename:dirname(code:which(?MODULE)),
-    ?line N = test_server:start_node(Name, slave, [{args, " -pa " ++ Pa}]),
+    ?line N = test_server:start_node(Name, Type, [{args, " -pa " ++ Pa}]),
     %% After starting a slave, it takes a little while until global knows
     %% about it, even if nodes() includes it, so we make sure that global
     %% knows about it before registering something on all nodes.
@@ -448,7 +453,7 @@ cast(Config) when is_list(Config) ->
 cast_fast(suite) -> [];
 cast_fast(doc) -> ["Test that cast really return immediately"];
 cast_fast(Config) when is_list(Config) ->
-    ?line {ok,Node} = start_node(hubba),
+    ?line {ok,Node} = start_node(hubba, slave),
     ?line {_,"@"++Host} = lists:splitwith(fun ($@) -> false; (_) -> true end,
 					   atom_to_list(Node)),
     ?line FalseNode = list_to_atom("hopp@"++Host),
@@ -1081,6 +1086,52 @@ spec_init_anonymous_default_timeout(Options) ->
 
 spec_init_not_proc_lib(Options) ->
     gen_server:enter_loop(?MODULE, Options, {}, infinity).
+
+
+%% --------------------------------------
+%% Test conflict resolution for gen_servers globally registered using custom
+%% function
+%% --------------------------------------
+global_resolver(suite) ->
+    [];
+global_resolver(doc) ->
+    ["Test 'global_resolver' option for gen_servers globally registered"];
+global_resolver(Config) when is_list(Config) ->
+    N = hubba,
+    ?line Node = proplists:get_value(node,Config),
+    ?line Parent = self(),
+    Fun = fun(_, P1, P2) ->
+                  P = if
+                          node(P1) =:= Node ->
+                              ?line ok = gen_server:call(P1, stop),
+                              exit(P1, kill),
+                              P2;
+                          true ->
+                              ?line ok = gen_server:call(P2, stop),
+                              P1
+                      end,
+                  Parent ! {result, P},
+                  P
+          end,
+    Opts = [{global_resolver, Fun}],
+
+    ?line {ok, Pid1} = rpc:call(Node, gen_server, start,
+                                [{global, N}, ?MODULE, [], Opts]),
+    ?line true = erlang:disconnect_node(Node),
+    ?line {ok, Pid2} = gen_server:start({global, N}, ?MODULE, [], Opts),
+    ?line true = net_kernel:connect_node(Node),
+    receive
+        {result, Pid2} ->
+            ?line true = is_process_alive(Pid2),
+            ?line false = rpc:call(Node, erlang, is_process_alive, [Pid1]);
+        {result, _} ->
+            test_server:fail(global_resolver_failed)
+    after 5000 ->
+            test_server:fail(global_resolver_not_called)
+    end,
+    ?line ok = gen_server:call(Pid2, stop),
+    ?line true = test_server:stop_node(Node),
+    ok.
 
 %%% --------------------------------------------------------
 %%% Here is the tested gen_server behaviour.

@@ -145,7 +145,8 @@
 %%%    Name ::= {local, atom()} | {global, atom()}
 %%%    Mod  ::= atom(), callback module implementing the 'real' server
 %%%    Args ::= term(), init arguments (to Mod:init/1)
-%%%    Options ::= [{timeout, Timeout} | {debug, [Flag]}]
+%%%    Options ::= [{timeout, Timeout} | {debug, [Flag]} |
+%%%                 {spawn_opt, OptionList} | {global_resolver, Method}]
 %%%      Flag ::= trace | log | {logfile, File} | statistics | debug
 %%%          (debug == log && statistics)
 %%% Returns: {ok, Pid} |

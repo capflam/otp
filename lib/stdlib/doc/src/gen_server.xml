@@ -89,7 +89,7 @@ gen_server:abcast     -----> Module:handle_cast/2
         <v>Module = atom()</v>
         <v>Args = term()</v>
         <v>Options = [Option]</v>
-        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts}</v>
+        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts} | {global_resolver,Method}</v>
         <v>&nbsp;&nbsp;Dbgs = [Dbg]</v>
         <v>&nbsp;&nbsp;&nbsp;Dbg = trace | log | statistics | {log_to_file,FileName} | {install,{Func,FuncState}}</v>
         <v>&nbsp;&nbsp;SOpts = [term()]</v>
@@ -110,7 +110,7 @@ gen_server:abcast     -----> Module:handle_cast/2
           registered locally as <c>Name</c> using <c>register/2</c>.
           If <c>ServerName={global,GlobalName}</c> the gen_server is
           registered globally as <c>GlobalName</c> using
-          <c>global:register_name/2</c>. If no name is provided,
+          <c>global:register_name/2,3</c>. If no name is provided,
           the gen_server is not registered.</p>
         <p><c>Module</c> is the name of the callback module.</p>
         <p><c>Args</c> is an arbitrary term which is passed as
@@ -119,6 +119,11 @@ gen_server:abcast     -----> Module:handle_cast/2
           the gen_server is allowed to spend <c>Time</c> milliseconds
           initializing or it will be terminated and the start function
           will return <c>{error,timeout}</c>.</p>
+        <p>If the option <c>{global_resolver,Method}</c> is present,
+          and if <c>ServerName={global,GlobalName}</c>, the gen_server will
+          be registered globally using <c>global:register_name/3</c>, with
+          <c>Method</c> as third argument. See
+          <seealso marker="kernel:global#register_name/3">global(3)</seealso>.</p>
         <p>If the option <c>{debug,Dbgs}</c> is present,
           the corresponding <c>sys</c> function will be called for each
           item in <c>Dbgs</c>. See
@@ -157,7 +162,7 @@ gen_server:abcast     -----> Module:handle_cast/2
         <v>Module = atom()</v>
         <v>Args = term()</v>
         <v>Options = [Option]</v>
-        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts}</v>
+        <v>&nbsp;Option = {debug,Dbgs} | {timeout,Time} | {spawn_opt,SOpts} | {global_resolver,Method}</v>
         <v>&nbsp;&nbsp;Dbgs = [Dbg]</v>
         <v>&nbsp;&nbsp;&nbsp;Dbg = trace | log | statistics | {log_to_file,FileName} | {install,{Func,FuncState}}</v>
         <v>&nbsp;&nbsp;SOpts = [term()]</v>
