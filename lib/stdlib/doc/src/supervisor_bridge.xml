@@ -51,36 +51,43 @@
   <funcs>
     <func>
       <name name="start_link" arity="2"/>
-      <name name="start_link" arity="3"/>
+      <name name="start_link" arity="3" clause_i="1"/>
+      <name name="start_link" arity="3" clause_i="2"/>
+      <name name="start_link" arity="4"/>
       <fsummary>Create a supervisor bridge process.</fsummary>
       <desc>
-        <p>Creates a supervisor_bridge process, linked to the calling
-          process, which calls <c><anno>Module</anno>:init/1</c> to start the subsystem.
-          To ensure a synchronized start-up procedure, this function does
-          not return until <c><anno>Module</anno>:init/1</c> has returned.</p>
-        <p>If <c><anno>SupBridgeName</anno>={local,<anno>Name</anno>}</c> the supervisor_bridge is
-          registered locally as <c><anno>Name</anno></c> using <c>register/2</c>.
-          If <c><anno>SupBridgeName</anno>={global,<anno>Name</anno>}</c> the supervisor_bridge is
-          registered globally as <c><anno>Name</anno></c> using
-          <c>global:register_name/2</c>.
-          If no name is provided, the supervisor_bridge is not registered.
-          If there already exists a process with the specified
+        <p>Creates a supervisor_bridge process, linked to the calling process,
+          which calls <c><anno>Module</anno>:init/1</c> to start the subsystem.
+          To ensure a synchronized start-up procedure, this function does not
+          return until <c><anno>Module</anno>:init/1</c> has returned.</p>
+        <p>If <c><anno>SupBridgeName</anno>={local,<anno>Name</anno>}</c> the
+          supervisor_bridge is registered locally as <c><anno>Name</anno></c>
+          using <c>register/2</c>.  If
+          <c><anno>SupBridgeName</anno>={global,<anno>GlobalName</anno>}</c>
+          the supervisor_bridge is registered globally as
+          <c><anno>GlobalName</anno></c> using <c>global:register_name/2,3</c>.
+          If no name is provided, the supervisor_bridge is not registered.  If
+          there already exists a process with the specified
           <c><anno>SupBridgeName</anno></c> the function returns
-          <c>{error,{already_started,<anno>Pid</anno>}}</c>, where <c><anno>Pid</anno></c> is the pid
-          of that process.</p>
+          <c>{error,{already_started,<anno>Pid</anno>}}</c>, where
+          <c><anno>Pid</anno></c> is the pid of that process.</p>
         <p><c><anno>Module</anno></c> is the name of the callback module.</p>
-        <p><c><anno>Args</anno></c> is an arbitrary term which is passed as the argument
-          to <c><anno>Module</anno>:init/1</c>.</p>
+        <p><c><anno>Args</anno></c> is an arbitrary term which is passed as the
+          argument to <c><anno>Module</anno>:init/1</c>.</p>
+        <p><c><anno>Options</anno></c> is a list of options. See
+          <seealso marker="gen_server#start_link/3">gen_server(3)</seealso> for
+          available options.</p>
         <p>If the supervisor_bridge and the subsystem are successfully
-          started the function returns <c>{ok,<anno>Pid</anno>}</c>, where <c><anno>Pid</anno></c> is
-          is the pid of the supervisor_bridge.</p>
-        <p>If <c><anno>Module</anno>:init/1</c> returns <c>ignore</c>, this function
-          returns <c>ignore</c> as well and the supervisor_bridge terminates
-          with reason <c>normal</c>.
-          If <c><anno>Module</anno>:init/1</c> fails or returns an error tuple or an
-          incorrect value, this function returns <c>{error,<anno>Error</anno>r}</c> where
-          <c><anno>Error</anno></c> is a term with information about the error, and
-          the supervisor_bridge terminates with reason <c><anno>Error</anno></c>.</p>
+          started the function returns <c>{ok,<anno>Pid</anno>}</c>, where
+          <c><anno>Pid</anno></c> is is the pid of the supervisor_bridge.</p>
+        <p>If <c><anno>Module</anno>:init/1</c> returns <c>ignore</c>, this
+          function returns <c>ignore</c> as well and the supervisor_bridge
+          terminates with reason <c>normal</c>.  If
+          <c><anno>Module</anno>:init/1</c> fails or returns an error tuple or
+          an incorrect value, this function returns
+          <c>{error,<anno>Error</anno>r}</c> where <c><anno>Error</anno></c> is
+          a term with information about the error, and the supervisor_bridge
+          terminates with reason <c><anno>Error</anno></c>.</p>
       </desc>
     </func>
   </funcs>

@@ -21,7 +21,7 @@
 -behaviour(gen_server).
 
 %% External exports
--export([start_link/2, start_link/3]).
+-export([start_link/2, start_link/3, start_link/4]).
 %% Internal exports
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 -export([code_change/3]).
@@ -59,16 +59,44 @@ start_link(Mod, StartArgs) ->
     gen_server:start_link(supervisor_bridge, [Mod, StartArgs, self], []).
 
 -spec start_link(SupBridgeName, Module, Args) -> Result when
-      SupBridgeName :: {local, Name} | {global, Name},
+      SupBridgeName :: {local, Name} | {global, GlobalName},
       Name :: atom(),
+      GlobalName :: term(),
       Module :: module(),
       Args :: term(),
       Result :: {ok, Pid} | ignore | {error, Error},
       Error :: {already_started, Pid} | term(),
+      Pid :: pid();
+                (Module, Args, Options) -> Result when
+      Module :: module(),
+      Args :: term(),
+      Options :: [tuple()],
+      Result :: {ok, Pid} | ignore | {error, Error},
+      Error :: {already_started, Pid} | term(),
       Pid :: pid().
 
-start_link(Name, Mod, StartArgs) ->
-    gen_server:start_link(Name, supervisor_bridge, [Mod, StartArgs, Name], []).
+start_link({local,_}=Name, Mod, StartArgs) ->
+    gen_server:start_link(Name, supervisor_bridge, [Mod, StartArgs, Name], []);
+start_link({global,_}=Name, Mod, StartArgs) ->
+    gen_server:start_link(Name, supervisor_bridge, [Mod, StartArgs, Name], []);
+start_link(Mod, StartArgs, Options) ->
+    gen_server:start_link(supervisor_bridge, [Mod, StartArgs, self], Options).
+
+-spec start_link(SupBridgeName, Module, Args, Options) -> Result when
+      SupBridgeName :: {local, Name} | {global, GlobalName},
+      Name :: atom(),
+      GlobalName :: term(),
+      Module :: module(),
+      Args :: term(),
+      Options :: [tuple()],
+      Result :: {ok, Pid} | ignore | {error, Error},
+      Error :: {already_started, Pid} | term(),
+      Pid :: pid().
+
+start_link(Name, Mod, StartArgs, Options) ->
+    gen_server:start_link(Name, supervisor_bridge, [Mod, StartArgs, Name],
+                          Options).
+
 
 %%-----------------------------------------------------------------
 %% Callback functions from gen_server
